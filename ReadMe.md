@@ -1,4 +1,4 @@
-The purpose of this guide is to provide instructions for installing macOS Monterey or macOS Big Sur on the Lenovo Legion Y530 laptop (Rescuer Y7000 (2018) will work as well, Chinese variant of Y530). macOS Catalina or older will need few changes to config.plist. Check [Acidanthera Updates: August 2021](https://dortania.github.io/hackintosh/updates/2021/08/02/acidanthera-august.html) for details. 
+The purpose of this guide is to provide instructions for installing macOS Monterey or macOS Big Sur or macOS Ventura on the Lenovo Legion Y530 laptop (Rescuer Y7000 (2018) will work as well, Chinese variant of Y530). macOS Catalina or older will need few changes to config.plist. Check [Acidanthera Updates: August 2021](https://dortania.github.io/hackintosh/updates/2021/08/02/acidanthera-august.html) for details. 
 
 
 ## Computer Specification
@@ -61,6 +61,7 @@ sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/chilledHamza/Hackinto
 - Follow [Fixing iMessage and other iServices | Dortania](https://dortania.github.io/OpenCore-Post-Install/universal/iservices.html)
 
 ## Credit
+- [Hamza](https://github.com/chilledHamza)
 - [Acidanthera](https://github.com/acidanthera)
 - [Alexandred](https://github.com/alexandred), [kprinssu](https://github.com/kprinssu), [ben9923](https://github.com/ben9923), [usr-sse2](https://github.com/usr-sse2) and others for [VoodooI2C](https://github.com/VoodooI2C/VoodooI2C)
 - [Mieze](https://github.com/Mieze)
