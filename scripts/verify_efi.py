@@ -24,6 +24,12 @@ BRCM_BUNDLES = {
     "BrcmFirmwareData.kext",
     "BrcmPatchRAM3.kext",
 }
+# Closed-source Realtek USB Wi-Fi / Tahoe AMFI helpers: documented, never shipped.
+FORBIDDEN_KEXTS = {
+    "RtWlanU.kext",
+    "RtWlanU1827.kext",
+    "AMFIPass.kext",
+}
 
 
 def check_common(cfg: dict, label: str) -> list[str]:
@@ -148,6 +154,9 @@ def main() -> None:
     errors.extend(check_usbports())
 
     live = {p.name for p in (OC / "Kexts").iterdir() if p.suffix == ".kext"}
+    shipped_forbidden = sorted(live & FORBIDDEN_KEXTS)
+    if shipped_forbidden:
+        errors.append(f"closed-source/experimental kexts must not be vendored: {shipped_forbidden}")
     referenced = {e["BundlePath"].split("/")[0] for e in seq["Kernel"]["Add"]}
     if tah is not None:
         referenced |= {e["BundlePath"].split("/")[0] for e in tah["Kernel"]["Add"]}

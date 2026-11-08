@@ -50,6 +50,14 @@ Image/Font/Label resources were copied from that commit. Existing OpenCanopy Aud
 
 Same OpenCore 1.0.8 binaries and kext pins are used by `EFI/OC/config.plist` (Sequoia 15.8.2 fallback) and `EFI/OC/config-tahoe-26.plist` (Tahoe 26.7.2). No extra kext zip is required for the Tahoe profile. VoodooHDA / OCLP are not pinned because they are not injected.
 
+## Not vendored (USB Wi-Fi)
+
+Owner dongle is USB `0bda:8179`. The matching macOS personality is chris1111 V17 `RtWlanU.kext` `RTL8188EU_8179` (Realtek closed blob `1830.32.b27.11192020`). Inspected 2026-11-08 from [V17](https://github.com/chris1111/Wireless-USB-OC-Big-Sur-Adapter/releases/tag/V17); **not copied into `EFI/OC/Kexts`**.
+
+| Artifact | SHA-256 (research copy only) |
+| --- | --- |
+| Wireless.USB.OC.Big.Sur.Adapter-V17.zip | `f71ab9e6e85767e2a711a919ff10bceb28de612d9df40e7a3d5befc72967bbba` |
+
 ## Hardware-specific files not replaced from upstream
 
 - `EFI/OC/ACPI/*.aml`
