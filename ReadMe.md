@@ -36,25 +36,31 @@ WhateverGreen 1.7.1 includes macOS 26 constants. Coffee Lake UHD 630 acceleratio
 
 ## Hardware (verified vs leftover)
 
-**Confirmed for this owner (About This Mac / System Information, 2026-11-08):**
+**Sonoma 14.3 baseline (owner System Information, transcribed; no serials/MACs):**
 
-- Legion Y530-15ICH, NVIDIA GTX 1050 Ti kept off, **Intel UHD Graphics 630 1536 MB** for the panel
-- **24 GB 2400 MHz DDR4**
-- **2.2 GHz 6-core Intel Core i7** — About This Mac does **not** show a SKU; this PR does **not** assert i7-8750H
-- Current OS: **macOS Sonoma 14.3** (spoofed as MacBook Pro 15-inch 2018 / `MacBookPro15,1`)
-- Daily Wi-Fi: USB **Vendor `0x0bda` Product `0x8179`** Realtek 802.11n, USB 480 Mb/s → USB ID Repository **RTL8188EUS**; chris1111 V17 personality `RTL8188EU_8179`
-- Separate **Bluetooth Radio** VID `0x0bda` PID `0xb023` Realtek Built-in Yes (USB ID Repository: RTL8822BE BT adapter). Does **not** prove PCI Wi-Fi or that BT works
-- Internal Wi-Fi **unknown and unused**. Serial numbers are private and not stored in this repo.
+| Item | What the current OS reports | What it does *not* prove |
+| --- | --- | --- |
+| CPU | 2.2 GHz 6-core Intel Core i7 | Exact SKU (not asserted as i7-8750H) |
+| RAM | **16 GB + 8 GB** DDR4, both 2400 MHz, Status OK (24 GB total) | Dual 16 GB. **Upgradeable Memory: No** is the spoofed MacBookPro15,1 SMBIOS, not Lenovo DIMM ability |
+| iGPU | UHD 630 **Device ID `0x3e9b`**, 1536 MB, **Metal 3**, internal **1920×1080** online main, framebuffer 24-bit ARGB8888 | Benchmarks; Tahoe QE/CI |
+| Audio | Built-in Input default, 2 ch 44100 Hz (internal mic); Built-in Output default/system, 2 ch 44100 Hz (internal speakers) | Audible playback/mic; codec identity |
+| Ethernet | PCI **`10ec:8168`** subvendor **`17aa`** subsystem **`38b4`** rev **`0015`** (RTL8168H/8111H); `com.insanelymac.RealtekRTL8111`; **en0**; max link 1 Gb/s | Link is actually 1 Gbps right now |
+| USB Wi-Fi | `0bda:8179` Realtek 802.11n, 480 Mb/s (in use) | Tahoe 26.7.2 wireless |
+| Bluetooth | State **On**, chipset **THIRD_PARTY_DONGLE**, USB, reported VendorID **`0x004c`** (Apple); headphones listed **Not Connected**. USB tree still **`0bda:b023`** | Apple/Broadcom silicon (spoofed vendor); successful pairing; PCI Wi-Fi |
+| Camera | UVC VendorID 1226 ProductID 28784 → **`04ca:7070`** (matches prior USB tree) | Capture/preview |
+| OS / identity | Sonoma 14.3; spoofed MacBook Pro 15-inch 2018 (`MacBookPro15,1`) | Real Mac hardware |
 
-**From the original tree only (Hamza; not re-verified from this About screen):** ALC236 / RTL8168H / ELAN061B / BIOS 8JCN56WW. That tree also wrote i7-8750H; Y530-15ICH also shipped as i5-8300H. BCM94352Z was the *previous* README card — **not assumed here**. Broadcom and Intel Wi-Fi kexts are **disabled** in both profiles.
+Existing OpenCore mappings kept: iGPU `AAPL,ig-platform-id` `00009B3E` (fits native `0x3e9b`), GTX 1050 Ti off, `RealtekRTL8111.kext`, USBPorts, AppleALC layout-id 18 on Sequoia only. No plist edits from these screenshots.
+
+**Repo-original only (photos do not identify):** ALC236 (layout 18 stays as the original Y530 mapping), ELAN061B, BIOS 8JCN56WW. Original tree also wrote i7-8750H; Y530-15ICH also shipped as i5-8300H. BCM94352Z is **not** assumed. Broadcom and Intel Wi-Fi kexts stay **disabled**. Internal Wi-Fi unknown/unused.
 
 ## Tahoe functional costs (if you switch the profile)
 
 | Area | Sequoia fallback | Tahoe 26 profile |
 | --- | --- | --- |
-| Display | UHD 630 + WEG (1536 MB already on Sonoma 14.3) | Same goal; Tahoe QE/CI still untested on this chassis |
-| Speakers / 3.5 mm | AppleALC layout 18 | Silent unless USB audio or a SIP-lowering VoodooHDA you add later |
-| Ethernet | RTL8111 3.0.0 | Same |
+| Display | Sonoma: `0x3e9b` / 1536 MB / Metal 3 / 1920×1080 | Same mapping; **Tahoe QE/CI untested** |
+| Speakers / 3.5 mm | Sonoma: Built-in I/O enumerated (codec still **ALC236 from original tree**, not from photos). Sequoia keeps AppleALC layout 18 | Analog expected **silent** (AppleHDA gone); USB audio or later opt-in |
+| Ethernet | Sonoma: `10ec:8168` `17aa:38b4` + `RealtekRTL8111` 3.0.0 on en0 | Same kext; confirm link after upgrade |
 | USB Wi-Fi | `0bda:8179` — **no kext in this EFI**; chris1111 `RtWlanU` is owner-installed if needed | Same kext policy; **Tahoe 26.7.2 unverified** (OCLP-Mod/AMFI not applied) |
 | Internal Wi-Fi | Disabled / unused | Same |
 | SIP | On | On (`csr-active-config` zeros) |
@@ -78,12 +84,12 @@ Details and SIP caveats: `extras/usb-wifi/README.md`. OS installs/updates: **Eth
 
 ## Graphics
 
-Internal LCD = Intel UHD 630. Preserved framebuffer (not generic Dortania `0900A53E`):
+Internal LCD = Intel UHD 630. Sonoma 14.3 already reports Device ID **`0x3e9b`**, 1536 MB, Metal 3, 1920×1080 online. Preserved framebuffer (not generic Dortania `0900A53E`):
 
 - `AAPL,ig-platform-id` = `00009B3E`
 - `con1` / `con2` disabled, `framebuffer-portcount` = 1
 
-Pascal dGPU remains off. Do not enable it to chase HDMI.
+That mapping was not changed for this inventory. Pascal dGPU remains off. Do not enable it to chase HDMI. Tahoe acceleration is still untested.
 
 ## Backup / rollback / BIOS
 
@@ -102,10 +108,11 @@ Both profiles: `MacBookPro15,1` with `REPLACE_WITH_GENSMBIOS_*` placeholders. Ge
 
 ## Audio / input / USB
 
-| Device | Sequoia | Tahoe |
+| Device | Sequoia fallback | Tahoe 26 |
 | --- | --- | --- |
-| ALC236 | layout-id 18; `AudioFix.sh` from this clone | Not via AppleALC; USB audio or later opt-in |
+| Analog audio | Keep AppleALC layout-id 18 (**ALC236 is repo-original**, not from photos). Sonoma already enumerates Built-in mic/speakers | Not via AppleALC; USB audio or later opt-in |
 | Trackpad | VoodooI2C 2.9.1; uncheck Force Click | Same |
+| Camera | UVC `04ca:7070` enumerated on Sonoma; capture untested | Re-check enumeration; capture still untested |
 | USB map | `USBPorts.kext` CNL `0xa36d8086` | Same file; extra `usb-port-number` |
 
 ## Upgrade path
@@ -115,13 +122,18 @@ Both profiles: `MacBookPro15,1` with `REPLACE_WITH_GENSMBIOS_*` placeholders. Ge
 
 ## Hardware checklist (USB boot)
 
+Compare against the **Sonoma 14.3 baseline** above. Tahoe columns are unknowns until actually booted.
+
 1. Picker appears; Reset NVRAM.
-2. Internal panel + brightness; About This Mac shows UHD 630 ≫ 7 MB VRAM; no NVIDIA.
+2. Display: internal **1920×1080** online; UHD 630 Device ID `0x3e9b`; VRAM ≫ 7 MB; Metal listed; no NVIDIA. (Sonoma: 1536 MB / Metal 3. Tahoe: same checks, untested.)
 3. HDMI expected dark.
-4. Ethernet download.
-5. USB Wi-Fi: already in use on Sonoma 14.3; Sequoia/Tahoe still need Ethernet until the owner re-applies chris1111 themselves. Tahoe wireless is unverified.
-6. Trackpad, keyboard, battery, sleep/wake, USB-A/C, webcam.
-7. Speakers: Sequoia yes / Tahoe expected silent without USB audio.
+4. Ethernet: `en0` with `RealtekRTL8111`; traffic works. Max link 1 Gb/s is capability, not proof of current speed.
+5. USB Wi-Fi: Ethernet for the install. `0bda:8179` already works on Sonoma; Sequoia/Tahoe need the owner’s chris1111 stack. Tahoe wireless is unverified.
+6. Audio: Sequoia — Built-in Input/Output still enumerated (2 ch / 44100). Photos did **not** prove playback/mic. Tahoe — analog expected missing.
+7. Camera: UVC `04ca:7070` still listed. No capture test on any OS.
+8. Bluetooth: may show On / THIRD_PARTY_DONGLE / USB. Do **not** treat reported `0x004c` as Apple/Broadcom hardware; pairing is unproven (`Not Connected` on Sonoma).
+9. Trackpad, keyboard, battery, sleep/wake, USB-A/C.
+10. Ignore **Upgradeable Memory: No** (SMBIOS spoof). Physical RAM is 16 GB + 8 GB.
 
 ## Validation (static)
 

@@ -9,7 +9,7 @@ OpenCore only loads `EFI/OC/config.plist`. This repo ships two validated plists.
 
 Golden Gate 27 has **no Intel kernel**. There is no third profile for it.
 
-The laptop is currently on **Sonoma 14.3** with USB Wi-Fi `0bda:8179` already in use. Neither profile injects `RtWlanU.kext`. Tahoe USB wireless remains **unverified** (`extras/usb-wifi/README.md`).
+The laptop is currently on **Sonoma 14.3**. That install already enumerates UHD 630 (`0x3e9b`, Metal 3, 1920×1080), Built-in audio endpoints, Ethernet `10ec:8168` via `RealtekRTL8111`, UVC `04ca:7070`, and USB Wi-Fi `0bda:8179`. Those are a **Sonoma baseline**, not Tahoe results. Neither profile injects `RtWlanU.kext`. Tahoe USB wireless, analog audio, and iGPU QE/CI remain **unverified**.
 
 ## How to switch (USB only)
 

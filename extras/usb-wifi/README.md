@@ -5,7 +5,7 @@ Owner System Information (USB tree), transcribed — no screenshots and no seria
 - **802.11n NIC:** Vendor `0x0bda` (Realtek), Product `0x8179`, USB up to **480 Mb/s** (USB 2.0 High Speed)
 - **Separate Bluetooth Radio:** VID `0x0bda` PID `0xb023` (Realtek), Built-in **Yes**
 
-That Bluetooth row does **not** identify a PCI Wi-Fi chipset and does **not** prove Bluetooth works in macOS. Internal WLAN stays unknown/unused. See `extras/intel-wireless/README.md`.
+That USB-tree row is a catalog clue only. Sonoma’s Bluetooth pane later reported State On, **THIRD_PARTY_DONGLE**, USB, VendorID **`0x004c`** (spoofed Apple), headphones **Not Connected**. Do not treat `0x004c` as Apple/Broadcom hardware and do not infer pairing. Internal WLAN stays unknown/unused. See `extras/intel-wireless/README.md`.
 
 This stick is already the daily network path on the current **Sonoma 14.3** install. This tree still does **not** inject a Wi-Fi kext.
 
