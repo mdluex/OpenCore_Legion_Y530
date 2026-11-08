@@ -18,9 +18,15 @@ Options that **lower security** (not in this EFI):
 
 ## Internal Wi-Fi / Broadcom / Intel CNVi
 
-The current owner’s internal card is **unknown and unused**. Broadcom kexts in `EFI/OC/Kexts` are disabled in both profiles. Do not enable them to “try.” See `extras/usb-wifi/README.md` for the USB adapter (model still unknown).
+The current owner’s internal WLAN is **unknown and unused**. Bluetooth Radio USB `0bda:b023` is catalogued as RTL8822BE BT; that still does not identify PCI Wi-Fi. Broadcom kexts in `EFI/OC/Kexts` are disabled in both profiles. Do not enable them to “try.” Daily Wi-Fi is USB `0bda:8179` — see `extras/usb-wifi/README.md`.
 
-OCLP modern wireless and AppleBCMWLANCompanion are irrelevant until a chipset is identified. They are not enabled.
+OCLP modern wireless and AppleBCMWLANCompanion are irrelevant here. They are not enabled.
+
+## USB Wi-Fi on Tahoe (not applied)
+
+chris1111’s Tahoe instructions for Realtek USB adapters require OCLP-Mod plus `AMFIPass.kext` or `amfi=0x80`, and Ethernet during that procedure. That lowers AMFI / uses a root patcher.
+
+This tree does **not** add those kexts, boot-args, or patches. Sequoia remains the SIP-on fallback. If USB wireless is required on 26.x, that is an owner-applied experiment on a USB EFI, then re-check after every update. Runtime of `0bda:8179` on Tahoe **26.7.2** is unverified.
 
 ## iGPU platform-id
 

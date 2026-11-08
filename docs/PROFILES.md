@@ -9,6 +9,8 @@ OpenCore only loads `EFI/OC/config.plist`. This repo ships two validated plists.
 
 Golden Gate 27 has **no Intel kernel**. There is no third profile for it.
 
+The laptop is currently on **Sonoma 14.3** with USB Wi-Fi `0bda:8179` already in use. Neither profile injects `RtWlanU.kext`. Tahoe USB wireless remains **unverified** (`extras/usb-wifi/README.md`).
+
 ## How to switch (USB only)
 
 1. Keep a USB copy of the working Sequoia `EFI` as rollback.
@@ -32,6 +34,7 @@ To go back, boot the Sequoia USB and restore its `EFI`.
 | WhateverGreen / UHD 630 | enabled | enabled |
 | GTX 1050 Ti | off (`SSDT-NoHybGfx` + `-wegnoegpu`) | same |
 | Broadcom / Intel Wi-Fi kexts | disabled | disabled |
+| USB Wi-Fi `0bda:8179` | **not injected** (`RtWlanU` stays out of this EFI) | same; Tahoe runtime **unverified** (chris1111 Tahoe path needs OCLP-Mod/AMFI — not applied) |
 | `SecureBootModel` | `Default` | **`Disabled`** (needed for installer/OTA on a dropped SMBIOS; documented, not silent) |
 | Extra boot-args | none | `-no_compat_check` `revpatch=sbvmm` |
 | Root patches / OCLP | none | none |

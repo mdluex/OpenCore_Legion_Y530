@@ -17,7 +17,7 @@ Hard architectural limits (spoofing a different Mac model does **not** fix these
 
 - **Golden Gate 27** — no x86_64 build. Last Intel release is Tahoe 26.
 - **GTX 1050 Ti (Pascal)** — no Metal drivers after High Sierra. It stays powered down (`SSDT-NoHybGfx` + `-wegnoegpu`). HDMI on this chassis is typically wired to that GPU, so HDMI-out is expected dead.
-- **USB Wi-Fi** — macOS does not magically drive an unidentified dongle. Driver status is **unresolved** until you send VID/PID (see below).
+- **USB Wi-Fi `0bda:8179` (RTL8188EUS)** — no Apple/Acidanthera kext. chris1111 `RtWlanU` is the matching closed Realtek blob; **not vendored**. Tahoe 26.7.2 runtime is **unverified**.
 
 Solvable with OpenCore / kexts (what those “Tahoe on OpenCore” builds actually do):
 
@@ -36,18 +36,26 @@ WhateverGreen 1.7.1 includes macOS 26 constants. Coffee Lake UHD 630 acceleratio
 
 ## Hardware (verified vs leftover)
 
-**Confirmed for this owner:** Legion Y530-15ICH, NVIDIA GTX 1050 Ti, **Intel iGPU for display**, internal Wi-Fi **unknown and unused**, daily Wi-Fi is an **external USB adapter (model not supplied)**.
+**Confirmed for this owner (About This Mac / System Information, 2026-11-08):**
 
-**From the original tree only (Hamza; not this owner’s WLAN):** i7-8750H / UHD 630 / ALC236 / RTL8168H / ELAN061B / BIOS 8JCN56WW. Y530-15ICH also shipped as i5-8300H. BCM94352Z was the *previous* README card — **not assumed here**. Broadcom and Intel Wi-Fi kexts are **disabled** in both profiles.
+- Legion Y530-15ICH, NVIDIA GTX 1050 Ti kept off, **Intel UHD Graphics 630 1536 MB** for the panel
+- **24 GB 2400 MHz DDR4**
+- **2.2 GHz 6-core Intel Core i7** — About This Mac does **not** show a SKU; this PR does **not** assert i7-8750H
+- Current OS: **macOS Sonoma 14.3** (spoofed as MacBook Pro 15-inch 2018 / `MacBookPro15,1`)
+- Daily Wi-Fi: USB **Vendor `0x0bda` Product `0x8179`** Realtek 802.11n, USB 480 Mb/s → USB ID Repository **RTL8188EUS**; chris1111 V17 personality `RTL8188EU_8179`
+- Separate **Bluetooth Radio** VID `0x0bda` PID `0xb023` Realtek Built-in Yes (USB ID Repository: RTL8822BE BT adapter). Does **not** prove PCI Wi-Fi or that BT works
+- Internal Wi-Fi **unknown and unused**. Serial numbers are private and not stored in this repo.
+
+**From the original tree only (Hamza; not re-verified from this About screen):** ALC236 / RTL8168H / ELAN061B / BIOS 8JCN56WW. That tree also wrote i7-8750H; Y530-15ICH also shipped as i5-8300H. BCM94352Z was the *previous* README card — **not assumed here**. Broadcom and Intel Wi-Fi kexts are **disabled** in both profiles.
 
 ## Tahoe functional costs (if you switch the profile)
 
 | Area | Sequoia fallback | Tahoe 26 profile |
 | --- | --- | --- |
-| Display | UHD 630 + WEG | Same goal; still untested on this chassis |
+| Display | UHD 630 + WEG (1536 MB already on Sonoma 14.3) | Same goal; Tahoe QE/CI still untested on this chassis |
 | Speakers / 3.5 mm | AppleALC layout 18 | Silent unless USB audio or a SIP-lowering VoodooHDA you add later |
 | Ethernet | RTL8111 3.0.0 | Same |
-| USB Wi-Fi | Unknown dongle — **no driver promised** | Same |
+| USB Wi-Fi | `0bda:8179` — **no kext in this EFI**; chris1111 `RtWlanU` is owner-installed if needed | Same kext policy; **Tahoe 26.7.2 unverified** (OCLP-Mod/AMFI not applied) |
 | Internal Wi-Fi | Disabled / unused | Same |
 | SIP | On | On (`csr-active-config` zeros) |
 | Apple Secure Boot | `Default` | **`Disabled`** (required for this dropped SMBIOS installer/OTA path; documented) |
@@ -57,9 +65,16 @@ WhateverGreen 1.7.1 includes macOS 26 constants. Coffee Lake UHD 630 acceleratio
 
 Maintenance: every Tahoe point release may need a USB installer. WhateverGreen must stay enabled for the iGPU; if a Tahoe *installer* blacks out, boot a USB with `-igfxvesa` only for that session — do not leave VESA as the daily config.
 
-## USB Wi-Fi — still unresolved
+## USB Wi-Fi (`0bda:8179`)
 
-Do not guess the chip. Send a photo of the dongle or Windows Hardware Ids (`VID_xxxx&PID_xxxx`). Details: `extras/usb-wifi/README.md`. Until then, install over **Ethernet**.
+Mapped and documented; **not injected**.
+
+- USB ID Repository: **RTL8188EUS**. chris1111 V17 `RtWlanU.kext` personality **`RTL8188EU_8179`** (`idVendor` `0x0bda`, `idProduct` `0x8179`). Same PID, family vs USB-variant names.
+- Maintained *installer* (closed Realtek blob, no source): [Wireless-USB-OC-Big-Sur-Adapter V17](https://github.com/chris1111/Wireless-USB-OC-Big-Sur-Adapter/releases/tag/V17). **Not vendored** here.
+- Sequoia: chris1111 wants Gatekeeper off; default path wants SIP fully off. This EFI keeps SIP on.
+- Tahoe 26.7.2: chris1111’s Tahoe doc needs OCLP-Mod + `AMFIPass`/`amfi=0x80`. **Unverified on this stick; not applied.**
+
+Details and SIP caveats: `extras/usb-wifi/README.md`. OS installs/updates: **Ethernet**.
 
 ## Graphics
 
@@ -104,7 +119,7 @@ Both profiles: `MacBookPro15,1` with `REPLACE_WITH_GENSMBIOS_*` placeholders. Ge
 2. Internal panel + brightness; About This Mac shows UHD 630 ≫ 7 MB VRAM; no NVIDIA.
 3. HDMI expected dark.
 4. Ethernet download.
-5. USB Wi-Fi: report whether the dongle enumerates; do not assume internet.
+5. USB Wi-Fi: already in use on Sonoma 14.3; Sequoia/Tahoe still need Ethernet until the owner re-applies chris1111 themselves. Tahoe wireless is unverified.
 6. Trackpad, keyboard, battery, sleep/wake, USB-A/C, webcam.
 7. Speakers: Sequoia yes / Tahoe expected silent without USB audio.
 
