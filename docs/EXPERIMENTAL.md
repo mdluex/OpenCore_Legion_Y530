@@ -4,7 +4,7 @@ Neither profile turns SIP off, installs OCLP, or patches the macOS root volume.
 
 ## Analog audio on Tahoe
 
-[Dortania](https://dortania.github.io/OpenCore-Install-Guide/extras/tahoe.html): AppleHDA is gone in macOS 26, so AppleALC cannot drive ALC236 speakers/headphones.
+[Dortania](https://dortania.github.io/OpenCore-Install-Guide/extras/tahoe.html): AppleHDA is gone in macOS 26, so AppleALC cannot drive analog speakers/headphones. **ALC236** is the original tree’s codec mapping; owner photos only show Sonoma Built-in Input/Output enumerated (2 ch / 44100 Hz), not a codec string and not a playback test.
 
 SIP-on options (preferred):
 
