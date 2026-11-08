@@ -46,6 +46,10 @@ Image/Font/Label resources were copied from that commit. Existing OpenCanopy Aud
 - Sequoia compatibility: https://support.apple.com/en-us/120282 (includes MacBook Pro 15-inch 2018)
 - Tahoe compatibility: https://support.apple.com/en-us/122867 (published 2026-09-14; 2018 15-inch MacBook Pro absent)
 
+## Profiles in this tree
+
+Same OpenCore 1.0.8 binaries and kext pins are used by `EFI/OC/config.plist` (Sequoia 15.8.2 fallback) and `EFI/OC/config-tahoe-26.plist` (Tahoe 26.7.2). No extra kext zip is required for the Tahoe profile. VoodooHDA / OCLP are not pinned because they are not injected.
+
 ## Hardware-specific files not replaced from upstream
 
 - `EFI/OC/ACPI/*.aml`

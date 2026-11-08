@@ -351,7 +351,7 @@
 				<key>BundlePath</key>
 				<string>RestrictEvents.kext</string>
 				<key>Comment</key>
-				<string>1.1.6 | Memory tab / process name; no sbvmm boot-arg</string>
+				<string>1.1.6 | RestrictEvents; Tahoe profile adds revpatch=sbvmm</string>
 				<key>Enabled</key>
 				<true/>
 				<key>ExecutablePath</key>
@@ -369,7 +369,7 @@
 				<key>BundlePath</key>
 				<string>WhateverGreen.kext</string>
 				<key>Comment</key>
-				<string>1.7.1 | iGPU + dGPU disable helper</string>
+				<string>1.7.1 | Intel UHD 630 + disable Pascal dGPU</string>
 				<key>Enabled</key>
 				<true/>
 				<key>ExecutablePath</key>
@@ -387,7 +387,7 @@
 				<key>BundlePath</key>
 				<string>AppleALC.kext</string>
 				<key>Comment</key>
-				<string>1.9.8 | ALC236 layout-id 18</string>
+				<string>1.9.8 | ALC236 layout-id 18 (Sequoia only; AppleHDA is gone in Tahoe)</string>
 				<key>Enabled</key>
 				<true/>
 				<key>ExecutablePath</key>
@@ -477,9 +477,9 @@
 				<key>BundlePath</key>
 				<string>AirportBrcmFixup.kext</string>
 				<key>Comment</key>
-				<string>2.2.1 | Broadcom Wi-Fi (BCM94352Z in original tree)</string>
+				<string>2.2.1 | Optional Broadcom Wi-Fi. Disabled: internal card unknown / unused</string>
 				<key>Enabled</key>
-				<true/>
+				<false/>
 				<key>ExecutablePath</key>
 				<string>Contents/MacOS/AirportBrcmFixup</string>
 				<key>MaxKernel</key>
@@ -497,7 +497,7 @@
 				<key>Comment</key>
 				<string>Catalina and older injector</string>
 				<key>Enabled</key>
-				<true/>
+				<false/>
 				<key>ExecutablePath</key>
 				<string></string>
 				<key>MaxKernel</key>
@@ -513,9 +513,9 @@
 				<key>BundlePath</key>
 				<string>AirportBrcmFixup.kext/Contents/PlugIns/AirPortBrcmNIC_Injector.kext</string>
 				<key>Comment</key>
-				<string>Big Sur through Ventura injector; Sonoma+ needs OCLP for this card class</string>
+				<string>Big Sur through Ventura injector</string>
 				<key>Enabled</key>
-				<true/>
+				<false/>
 				<key>ExecutablePath</key>
 				<string></string>
 				<key>MaxKernel</key>
@@ -531,9 +531,9 @@
 				<key>BundlePath</key>
 				<string>BlueToolFixup.kext</string>
 				<key>Comment</key>
-				<string>2.7.2 | Bluetooth Monterey+</string>
+				<string>2.7.2 | Optional Broadcom Bluetooth. Disabled until BT chip is identified</string>
 				<key>Enabled</key>
-				<true/>
+				<false/>
 				<key>ExecutablePath</key>
 				<string>Contents/MacOS/BlueToolFixup</string>
 				<key>MaxKernel</key>
@@ -549,9 +549,9 @@
 				<key>BundlePath</key>
 				<string>BrcmBluetoothInjector.kext</string>
 				<key>Comment</key>
-				<string>2.7.2 | Bluetooth Big Sur and older</string>
+				<string>2.7.2 | Optional Broadcom BT injector</string>
 				<key>Enabled</key>
-				<true/>
+				<false/>
 				<key>ExecutablePath</key>
 				<string></string>
 				<key>MaxKernel</key>
@@ -567,9 +567,9 @@
 				<key>BundlePath</key>
 				<string>BrcmFirmwareData.kext</string>
 				<key>Comment</key>
-				<string>2.7.2 | Broadcom firmware store</string>
+				<string>2.7.2 | Optional Broadcom firmware store</string>
 				<key>Enabled</key>
-				<true/>
+				<false/>
 				<key>ExecutablePath</key>
 				<string>Contents/MacOS/BrcmFirmwareData</string>
 				<key>MaxKernel</key>
@@ -585,9 +585,9 @@
 				<key>BundlePath</key>
 				<string>BrcmPatchRAM3.kext</string>
 				<key>Comment</key>
-				<string>2.7.2 | Broadcom firmware upload</string>
+				<string>2.7.2 | Optional Broadcom firmware upload</string>
 				<key>Enabled</key>
-				<true/>
+				<false/>
 				<key>ExecutablePath</key>
 				<string>Contents/MacOS/BrcmPatchRAM3</string>
 				<key>MaxKernel</key>
@@ -675,7 +675,7 @@
 				<key>BundlePath</key>
 				<string>VoodooI2CHID.kext</string>
 				<key>Comment</key>
-				<string>2.9.1 satellite | HID trackpad (ELAN061B in original tree)</string>
+				<string>2.9.1 satellite | HID trackpad</string>
 				<key>Enabled</key>
 				<true/>
 				<key>ExecutablePath</key>
@@ -783,7 +783,7 @@
 				<key>BundlePath</key>
 				<string>USBPorts.kext</string>
 				<key>Comment</key>
-				<string>Hardware USB map for MacBookPro15,1 / CNL XHCI 0xa36d8086</string>
+				<string>Hardware USB map MacBookPro15,1 / CNL XHCI 0xa36d8086; has Tahoe usb-port-number keys</string>
 				<key>Enabled</key>
 				<true/>
 				<key>ExecutablePath</key>
@@ -1608,5 +1608,7 @@
 		<key>Unload</key>
 		<array/>
 	</dict>
+	<key>#WARNING - Profile</key>
+	<string>Sequoia 15.8.2 conservative fallback (SIP on, AppleALC, SecureBootModel Default). For last Intel macOS use config-tahoe-26.plist.</string>
 </dict>
 </plist>

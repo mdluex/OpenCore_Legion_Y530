@@ -1,33 +1,27 @@
-# Experimental paths (not default)
+# Optional paths that are not applied by default
 
-Nothing in this file is enabled in `EFI/OC/config.plist`. These options exist only so "latest macOS" is not claimed by weakening SIP, Secure Boot, or by installing root patches.
+Neither profile turns SIP off, installs OCLP, or patches the macOS root volume.
 
-## macOS Tahoe 26.7.2
+## Analog audio on Tahoe
 
-Apple's last Intel macOS. Official hardware list is 2019 16-inch MacBook Pro, 2020 13-inch MacBook Pro (4× Thunderbolt 3), 2020 27-inch iMac, and 2019 Mac Pro. The 2018 15-inch MacBook Pro (`MacBookPro15,1`) is **not** listed.
+[Dortania](https://dortania.github.io/OpenCore-Install-Guide/extras/tahoe.html): AppleHDA is gone in macOS 26, so AppleALC cannot drive ALC236 speakers/headphones.
 
-Even if the installer is forced:
+SIP-on options (preferred):
 
-- Analog audio through AppleALC will not work: AppleHDA was removed in macOS 26 (Dortania Tahoe notes).
-- Workarounds are VoodooHDA (quality drop) or OpenCore Legacy Patcher restoring AppleHDA (**root patch, SIP off**).
-- UHD 630 as the only GPU on a dropped SMBIOS is unproven on this laptop.
+- USB audio dongle (class-compliant; no kext). HDMI audio is not a fallback here because HDMI is wired to the disabled GTX 1050 Ti.
+- Ethernet/USB already work without touching SIP.
 
-Do not add `revpatch=sbvmm`, `-no_compat_check`, or `SecureBootModel=Disabled` as defaults to chase Tahoe.
+Options that **lower security** (not in this EFI):
 
-## OpenCore Legacy Patcher (modern wireless / root patches)
+- Dortania VoodooHDA method: `csr-active-config` `03000000`, copy VoodooHDA to `/Library/Extensions`. Quality is often worse. Do this yourself if you accept SIP bits off.
+- OCLP / SimpleHDA restoring AppleHDA: root patch, re-apply after every update. Not shipped.
 
-BCM94352Z Wi-Fi on Sonoma and Sequoia generally needs OCLP's modern wireless patches (legacy IO80211). That requires:
+## Internal Wi-Fi / Broadcom / Intel CNVi
 
-- Disabling SIP (`csr-active-config` non-zero)
-- AMFI-related patches
-- Re-applying patches after every OS update
+The current owner’s internal card is **unknown and unused**. Broadcom kexts in `EFI/OC/Kexts` are disabled in both profiles. Do not enable them to “try.” See `extras/usb-wifi/README.md` for the USB adapter (model still unknown).
 
-That is an **opt-in** you do locally if Ethernet is not enough. It is not shipped here. If you go that route, keep this default EFI on a USB so you can boot with SIP enabled again.
+OCLP modern wireless and AppleBCMWLANCompanion are irrelevant until a chipset is identified. They are not enabled.
 
-## Golden Gate 27.2
+## iGPU platform-id
 
-Apple silicon only. There is no Intel kernel. Not a Hackintosh target.
-
-## Changing iGPU platform-id
-
-Dortania currently recommends `0900A53E` for UHD 630 laptops. This tree keeps `00009B3E` plus disabled `con1`/`con2` because HDMI is dGPU-wired. If the internal panel will not accelerate, try `0900A53E` on a **USB EFI** only, and restore immediately if you get a black screen.
+Dortania laptop UHD 630 ID `0900A53E` is **not** the default. This tree keeps `00009B3E` plus disabled `con1`/`con2`. Try `0900A53E` only on a USB EFI if the internal panel has no acceleration.

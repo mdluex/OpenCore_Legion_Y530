@@ -1,14 +1,13 @@
-# Intel wireless (opt-in, not in the live EFI)
+# Internal Intel Wi-Fi (not confirmed, not loaded)
 
-The previous live config loaded **Broadcom** kexts (AirportBrcmFixup + BrcmPatchRAM) matching the original author's documented BCM94352Z replacement.
+The current owner’s internal WLAN chipset is **unknown** and is **not used**. Connectivity is an external USB adapter (`extras/usb-wifi/`). “Intel card” in that discussion meant **Intel UHD 630 graphics**, not Intel CNVi Wi-Fi.
 
-Stock Legion Y530 units often shipped with Intel CNVi (model varies). That is **not confirmed** for the current owner. The old `AirportItlwm.kext` 2.2.0 and `IntelBluetoothFirmware.kext` 2.3.0 that sat unused in `EFI/OC/Kexts` were removed so they cannot be enabled by accident: AirportItlwm builds are **macOS-version-specific** and a mismatched kext is worse than no kext.
+Stock Y530 units sometimes shipped with Intel CNVi. That is not evidence for this machine. AirportItlwm is OS-version-specific; a random leftover kext is worse than none.
 
-If you confirm an Intel card (`lspci` / Windows Device Manager / Linux `lshw`):
+If you later identify an Intel CNVi device (`lspci` / Device Manager Hardware Ids) **and** you want it instead of USB Wi-Fi:
 
-1. Download the AirportItlwm (or itlwm + Heliport) build that matches **your macOS version** from [OpenIntelWireless](https://github.com/OpenIntelWireless/itlwm/releases).
-2. Download a matching IntelBluetoothFirmware + IntelBTPatcher / BlueToolFixup set from [OpenIntelWireless/IntelBluetoothFirmware](https://github.com/OpenIntelWireless/IntelBluetoothFirmware/releases).
-3. Disable the Broadcom kexts in `config.plist` (do not load both stacks).
-4. Test from USB EFI.
+1. Download AirportItlwm or itlwm matching **that exact macOS version** from [OpenIntelWireless/itlwm](https://github.com/OpenIntelWireless/itlwm/releases).
+2. Keep Broadcom kexts disabled.
+3. Test from USB EFI.
 
-Do not guess the card from this README.
+Do not enable those kexts on a guess.
