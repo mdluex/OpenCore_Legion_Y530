@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""Apply Legion Y530 hardware mappings onto an OpenCore 1.0.8-valid config.plist.
+"""Generate Sequoia fallback and Tahoe-26 profiles for this Y530 EFI.
 
 Does not invent SMBIOS identity. Writes obvious local placeholders only.
+Internal WLAN is unknown; Broadcom and Intel Wi-Fi kexts stay disabled.
 """
 from __future__ import annotations
 
+import copy
 import plistlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "EFI/OC/config.plist"
+OC = ROOT / "EFI/OC"
+CONFIG_SEQUOIA = OC / "config.plist"
+CONFIG_TAHOE = OC / "config-tahoe-26.plist"
+USBPORTS = OC / "Kexts/USBPorts.kext/Contents/Info.plist"
+
+NVRAM_GUID = "7C436110-AB2A-4BBB-A880-FE41995C9F82"
 
 
 def kext(
@@ -63,30 +70,113 @@ def tool(path: str, name: str, comment: str, *, enabled: bool = True, flavour: s
     }
 
 
-def main() -> None:
-    cfg = plistlib.loads(CONFIG.read_bytes())
+def kernel_add(*, applealc: bool) -> list:
+    # Internal WLAN chipset is unknown and unused. Broadcom kexts remain on disk
+    # but disabled so this tree does not assume BCM94352Z or Intel CNVi.
+    return [
+        kext("Lilu.kext", "1.7.2 | Patch engine", min_kernel="10.0.0"),
+        kext("VirtualSMC.kext", "1.3.8 | SMC emulator", min_kernel="10.0.0"),
+        kext("SMCBatteryManager.kext", "1.3.8 | Battery"),
+        kext("SMCProcessor.kext", "1.3.8 | CPU thermal"),
+        kext("RestrictEvents.kext", "1.1.6 | RestrictEvents; Tahoe profile adds revpatch=sbvmm"),
+        kext("WhateverGreen.kext", "1.7.1 | Intel UHD 630 + disable Pascal dGPU", min_kernel="12.0.0"),
+        kext(
+            "AppleALC.kext",
+            "1.9.8 | ALC236 layout-id 18 (Sequoia only; AppleHDA is gone in Tahoe)",
+            enabled=applealc,
+            min_kernel="12.0.0",
+        ),
+        kext("RealtekRTL8111.kext", "3.0.0 | RTL8168H/RTL8111 Ethernet"),
+        kext("CpuTscSync.kext", "1.1.2 | TSC sync on wake"),
+        kext("NVMeFix.kext", "1.1.3 | NVMe PM"),
+        kext("BrightnessKeys.kext", "1.0.3 | Brightness keys"),
+        kext(
+            "AirportBrcmFixup.kext",
+            "2.2.1 | Optional Broadcom Wi-Fi. Disabled: internal card unknown / unused",
+            enabled=False,
+        ),
+        kext(
+            "AirportBrcmFixup.kext/Contents/PlugIns/AirPortBrcm4360_Injector.kext",
+            "Catalina and older injector",
+            executable="",
+            enabled=False,
+            max_kernel="19.9.9",
+        ),
+        kext(
+            "AirportBrcmFixup.kext/Contents/PlugIns/AirPortBrcmNIC_Injector.kext",
+            "Big Sur through Ventura injector",
+            executable="",
+            enabled=False,
+        ),
+        kext(
+            "BlueToolFixup.kext",
+            "2.7.2 | Optional Broadcom Bluetooth. Disabled until BT chip is identified",
+            enabled=False,
+            min_kernel="21.0.0",
+        ),
+        kext(
+            "BrcmBluetoothInjector.kext",
+            "2.7.2 | Optional Broadcom BT injector",
+            executable="",
+            enabled=False,
+            max_kernel="20.99.99",
+        ),
+        kext(
+            "BrcmFirmwareData.kext",
+            "2.7.2 | Optional Broadcom firmware store",
+            enabled=False,
+        ),
+        kext(
+            "BrcmPatchRAM3.kext",
+            "2.7.2 | Optional Broadcom firmware upload",
+            enabled=False,
+        ),
+        kext("VoodooI2C.kext/Contents/PlugIns/VoodooI2CServices.kext", "VoodooI2C 2.9.1 services"),
+        kext("VoodooI2C.kext/Contents/PlugIns/VoodooGPIO.kext", "VoodooI2C 2.9.1 GPIO"),
+        kext(
+            "VoodooI2C.kext/Contents/PlugIns/VoodooInput.kext",
+            "VoodooI2C 2.9.1 input; keep VoodooPS2 VoodooInput disabled",
+        ),
+        kext("VoodooI2C.kext", "2.9.1 | I2C controller"),
+        kext("VoodooI2CHID.kext", "2.9.1 satellite | HID trackpad"),
+        kext("VoodooPS2Controller.kext", "2.3.7 | PS/2 keyboard"),
+        kext(
+            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooPS2Keyboard.kext",
+            "2.3.7 | Keyboard",
+        ),
+        kext(
+            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooInput.kext",
+            "Disabled; VoodooI2C already provides VoodooInput",
+            enabled=False,
+        ),
+        kext(
+            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooPS2Mouse.kext",
+            "Disabled; I2C trackpad is used",
+            enabled=False,
+        ),
+        kext(
+            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooPS2Trackpad.kext",
+            "Disabled; I2C trackpad is used",
+            enabled=False,
+        ),
+        kext(
+            "USBPorts.kext",
+            "Hardware USB map MacBookPro15,1 / CNL XHCI 0xa36d8086; has Tahoe usb-port-number keys",
+            executable="",
+        ),
+    ]
 
-    # OpenCore 1.0.8 schema additions. Preserve existing Booter quirk choices
-    # (EnableWriteUnprotector=True / RebuildAppleMemoryMap=False is the OEM-laptop
-    # MAT-missing combination this tree already used).
+
+def apply_common(cfg: dict) -> None:
     cfg["Booter"]["Quirks"]["ClearTaskSwitchBit"] = False
 
-    # Keep iGPU connector disables and ALC236 layout-id 18 exactly.
-    # -wegnoegpu is added in boot-args; SSDT-NoHybGfx remains the ACPI dGPU off path.
-    boot_args = "keepsyms=1 debug=0x100 -wegnoegpu"
-    nvram_guid = "7C436110-AB2A-4BBB-A880-FE41995C9F82"
-    nvadd = cfg["NVRAM"]["Add"][nvram_guid]
-    nvadd["boot-args"] = boot_args
+    nvadd = cfg["NVRAM"]["Add"][NVRAM_GUID]
     nvadd["ForceDisplayRotationInEFI"] = 0
-    nvadd["csr-active-config"] = b"\x00\x00\x00\x00"  # SIP enabled
-    # Required by BrcmPatchRAM 2.7.x BlueToolFixup on all macOS versions.
+    nvadd["csr-active-config"] = b"\x00\x00\x00\x00"
     nvadd["bluetoothExternalDongleFailed"] = b"\x00"
     nvadd["bluetoothInternalControllerInfo"] = bytes(14)
 
-    cfg["NVRAM"]["Delete"][nvram_guid] = [
-        "boot-args",
-        "ForceDisplayRotationInEFI",
-    ]
+    cfg["NVRAM"]["Delete"][NVRAM_GUID] = ["boot-args", "ForceDisplayRotationInEFI"]
     cfg["NVRAM"]["LegacySchema"] = {
         "7C436110-AB2A-4BBB-A880-FE41995C9F82": [
             "EFILoginHiDPI",
@@ -115,11 +205,8 @@ def main() -> None:
         ],
     }
 
-    # 1.0.8 Serial schema (Custom block removed). Init/Override unused.
     cfg["Misc"]["Serial"] = {"Init": False, "Override": False}
 
-    # Do not ship previous machine identity. Generate locally with GenSMBIOS
-    # for MacBookPro15,1 before using iCloud / iMessage.
     generic = cfg["PlatformInfo"]["Generic"]
     generic["MLB"] = "REPLACE_WITH_GENSMBIOS_MLB"
     generic["ROM"] = bytes.fromhex("112233445566")
@@ -127,14 +214,9 @@ def main() -> None:
     generic["SystemSerialNumber"] = "REPLACE_WITH_GENSMBIOS_SERIAL"
     generic["SystemUUID"] = "00000000-0000-0000-0000-000000000000"
 
-    # BlacklistAppleUpdate stays true so this SMBIOS is not offered Tahoe /
-    # Golden Gate OTAs that this hardware cannot run usefully.
-    cfg["Misc"]["Security"]["SecureBootModel"] = "Default"
     cfg["Misc"]["Security"]["Vault"] = "Optional"
     cfg["Misc"]["Security"]["ScanPolicy"] = 0
     cfg["Misc"]["Boot"]["PickerMode"] = "External"
-
-    # Machine-specific Windows path from the previous tree is not portable.
     cfg["Misc"]["Entries"] = [
         {
             "Arguments": "",
@@ -147,7 +229,6 @@ def main() -> None:
             "TextMode": False,
         }
     ]
-
     cfg["Misc"]["Tools"] = [
         tool("OpenShell.efi", "UEFI Shell", "Not signed for security reasons",
              flavour="OpenShell:UEFIShell:Shell"),
@@ -156,7 +237,6 @@ def main() -> None:
         tool("ControlMsrE2.efi", "ControlMsrE2", "Check CFG Lock (MSR 0xE2). Do not flash firmware from here.",
              full_nvram=False, real_path=False, text_mode=True),
     ]
-
     cfg["UEFI"]["Drivers"] = [
         driver("OpenRuntime.efi", "Required OpenCore runtime"),
         driver("OpenCanopy.efi", "Graphical picker"),
@@ -168,80 +248,58 @@ def main() -> None:
     ]
     cfg["UEFI"]["Unload"] = []
 
-    # Kext order: Lilu first, then VirtualSMC family, WEG/ALC, then device kexts.
-    # VoodooI2C plugins before VoodooI2C. Do not enable both VoodooInput copies.
-    cfg["Kernel"]["Add"] = [
-        kext("Lilu.kext", "1.7.2 | Patch engine", min_kernel="10.0.0"),
-        kext("VirtualSMC.kext", "1.3.8 | SMC emulator", min_kernel="10.0.0"),
-        kext("SMCBatteryManager.kext", "1.3.8 | Battery"),
-        kext("SMCProcessor.kext", "1.3.8 | CPU thermal"),
-        kext("RestrictEvents.kext", "1.1.6 | Memory tab / process name; no sbvmm boot-arg"),
-        kext("WhateverGreen.kext", "1.7.1 | iGPU + dGPU disable helper", min_kernel="12.0.0"),
-        kext("AppleALC.kext", "1.9.8 | ALC236 layout-id 18", min_kernel="12.0.0"),
-        kext("RealtekRTL8111.kext", "3.0.0 | RTL8168H/RTL8111 Ethernet"),
-        kext("CpuTscSync.kext", "1.1.2 | TSC sync on wake"),
-        kext("NVMeFix.kext", "1.1.3 | NVMe PM"),
-        kext("BrightnessKeys.kext", "1.0.3 | Brightness keys"),
-        kext("AirportBrcmFixup.kext", "2.2.1 | Broadcom Wi-Fi (BCM94352Z in original tree)"),
-        kext(
-            "AirportBrcmFixup.kext/Contents/PlugIns/AirPortBrcm4360_Injector.kext",
-            "Catalina and older injector",
-            executable="",
-            max_kernel="19.9.9",
-        ),
-        kext(
-            "AirportBrcmFixup.kext/Contents/PlugIns/AirPortBrcmNIC_Injector.kext",
-            "Big Sur through Ventura injector; Sonoma+ needs OCLP for this card class",
-            executable="",
-        ),
-        kext("BlueToolFixup.kext", "2.7.2 | Bluetooth Monterey+", min_kernel="21.0.0"),
-        kext(
-            "BrcmBluetoothInjector.kext",
-            "2.7.2 | Bluetooth Big Sur and older",
-            executable="",
-            max_kernel="20.99.99",
-        ),
-        kext("BrcmFirmwareData.kext", "2.7.2 | Broadcom firmware store"),
-        kext("BrcmPatchRAM3.kext", "2.7.2 | Broadcom firmware upload"),
-        kext(
-            "VoodooI2C.kext/Contents/PlugIns/VoodooI2CServices.kext",
-            "VoodooI2C 2.9.1 services",
-        ),
-        kext(
-            "VoodooI2C.kext/Contents/PlugIns/VoodooGPIO.kext",
-            "VoodooI2C 2.9.1 GPIO",
-        ),
-        kext(
-            "VoodooI2C.kext/Contents/PlugIns/VoodooInput.kext",
-            "VoodooI2C 2.9.1 input; keep VoodooPS2 VoodooInput disabled",
-        ),
-        kext("VoodooI2C.kext", "2.9.1 | I2C controller"),
-        kext("VoodooI2CHID.kext", "2.9.1 satellite | HID trackpad (ELAN061B in original tree)"),
-        kext("VoodooPS2Controller.kext", "2.3.7 | PS/2 keyboard"),
-        kext(
-            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooPS2Keyboard.kext",
-            "2.3.7 | Keyboard",
-        ),
-        kext(
-            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooInput.kext",
-            "Disabled; VoodooI2C already provides VoodooInput",
-            enabled=False,
-        ),
-        kext(
-            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooPS2Mouse.kext",
-            "Disabled; I2C trackpad is used",
-            enabled=False,
-        ),
-        kext(
-            "VoodooPS2Controller.kext/Contents/PlugIns/VoodooPS2Trackpad.kext",
-            "Disabled; I2C trackpad is used",
-            enabled=False,
-        ),
-        kext("USBPorts.kext", "Hardware USB map for MacBookPro15,1 / CNL XHCI 0xa36d8086", executable=""),
-    ]
 
-    CONFIG.write_bytes(plistlib.dumps(cfg, sort_keys=False))
-    print(f"Wrote {CONFIG}")
+def patch_usbports_for_tahoe() -> None:
+    """Keep existing `port` keys and add `usb-port-number` for macOS 26 USB mapping."""
+    data = plistlib.loads(USBPORTS.read_bytes())
+    ports = data["IOKitPersonalities"]["MacBookPro15,1-XHC"]["IOProviderMergeProperties"]["ports"]
+    for port in ports.values():
+        if "port" in port:
+            port["usb-port-number"] = port["port"]
+    USBPORTS.write_bytes(plistlib.dumps(data, sort_keys=False))
+    print(f"Updated {USBPORTS} with usb-port-number keys")
+
+
+def write_profile(base: dict, *, profile: str) -> Path:
+    cfg = copy.deepcopy(base)
+    apply_common(cfg)
+    if profile == "sequoia":
+        cfg["#WARNING - Profile"] = (
+            "Sequoia 15.8.2 conservative fallback (SIP on, AppleALC, SecureBootModel Default). "
+            "For last Intel macOS use config-tahoe-26.plist."
+        )
+        cfg["NVRAM"]["Add"][NVRAM_GUID]["boot-args"] = "keepsyms=1 debug=0x100 -wegnoegpu"
+        cfg["Misc"]["Security"]["SecureBootModel"] = "Default"
+        cfg["Misc"]["Security"]["BlacklistAppleUpdate"] = True
+        cfg["Kernel"]["Add"] = kernel_add(applealc=True)
+        path = CONFIG_SEQUOIA
+    elif profile == "tahoe":
+        cfg["#WARNING - Profile"] = (
+            "Tahoe 26 newest-achievable Intel profile. SIP stays on. SecureBootModel Disabled "
+            "and revpatch=sbvmm are installer/OTA spoofing, not AppleHDA root patches. "
+            "Rename to config.plist on a USB to use. Golden Gate 27 is not possible."
+        )
+        # -no_compat_check: boot dropped MacBookPro15,1. revpatch=sbvmm: OTA/installer
+        # board-id check (Dortania Tahoe OTA notes). Neither disables SIP.
+        cfg["NVRAM"]["Add"][NVRAM_GUID]["boot-args"] = (
+            "keepsyms=1 debug=0x100 -wegnoegpu -no_compat_check revpatch=sbvmm"
+        )
+        cfg["Misc"]["Security"]["SecureBootModel"] = "Disabled"
+        cfg["Misc"]["Security"]["BlacklistAppleUpdate"] = True
+        cfg["Kernel"]["Add"] = kernel_add(applealc=False)
+        path = CONFIG_TAHOE
+    else:
+        raise ValueError(profile)
+    path.write_bytes(plistlib.dumps(cfg, sort_keys=False))
+    print(f"Wrote {path}")
+    return path
+
+
+def main() -> None:
+    patch_usbports_for_tahoe()
+    base = plistlib.loads(CONFIG_SEQUOIA.read_bytes())
+    write_profile(base, profile="sequoia")
+    write_profile(base, profile="tahoe")
 
 
 if __name__ == "__main__":
