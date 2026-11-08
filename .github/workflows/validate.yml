@@ -1,0 +1,17 @@
+name: Validate OpenCore EFI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ocvalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate config.plist with OpenCore 1.0.8 ocvalidate
+        run: |
+          chmod +x tools/ocvalidate.linux
+          ./tools/ocvalidate.linux EFI/OC/config.plist
+      - name: Static file-reference and identity checks
+        run: python3 scripts/verify_efi.py
